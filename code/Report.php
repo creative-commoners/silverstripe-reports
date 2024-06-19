@@ -102,7 +102,7 @@ class Report extends ViewableData
      * @var array
      */
     private static $excluded_reports = [
-        self::class,
+        Report::class,
         ReportWrapper::class,
         SideReportWrapper::class,
     ];
@@ -275,7 +275,7 @@ class Report extends ViewableData
      */
     public static function get_excluded_reports()
     {
-        return (array) self::config()->get('excluded_reports');
+        return (array) Report::config()->get('excluded_reports');
     }
 
     /**
