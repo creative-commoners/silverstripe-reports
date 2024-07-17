@@ -4,14 +4,14 @@ namespace SilverStripe\Reports\Tests;
 
 use ReflectionClass;
 use SilverStripe\Control\Controller;
-use SilverStripe\Control\HTTPRequest;
-use SilverStripe\Dev\SapphireTest;
+use SilverStripe\Dev\FunctionalTest;
 use SilverStripe\Reports\Report;
 use SilverStripe\Reports\ReportAdmin;
+use SilverStripe\Reports\Tests\ReportAdminTest\CannotViewReport;
 use SilverStripe\Reports\Tests\ReportAdminTest\FakeReport;
 use SilverStripe\Reports\Tests\ReportAdminTest\FakeReport2;
 
-class ReportAdminTest extends SapphireTest
+class ReportAdminTest extends FunctionalTest
 {
     public function testBreadcrumbsAreGenerated()
     {
@@ -44,6 +44,34 @@ class ReportAdminTest extends SapphireTest
 
         $map = $breadcrumbs[2]->toMap();
         $this->assertSame('Fake report two', $map['Title']);
+    }
+
+    public function provideShowReport(): array
+    {
+        return [
+            'cannot view' => [
+                'reportClass' => CannotViewReport::class,
+                'expected' => 403,
+            ],
+            'can view' => [
+                'reportClass' => FakeReport::class,
+                'expected' => 200,
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider provideShowReport
+     */
+    public function testShowReport(string $reportClass, int $expected): void
+    {
+        $this->logInWithPermission('ADMIN');
+        $report = new $reportClass();
+        $controller = $this->mockController($report);
+        $breadcrumbs = $controller->BreadCrumbs();
+        $response = $this->get($breadcrumbs[1]->Link);
+
+        $this->assertSame($expected, $response->getStatusCode());
     }
 
     /**
