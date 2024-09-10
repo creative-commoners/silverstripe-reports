@@ -10,6 +10,7 @@ use SilverStripe\Reports\ReportAdmin;
 use SilverStripe\Reports\Tests\ReportAdminTest\CannotViewReport;
 use SilverStripe\Reports\Tests\ReportAdminTest\FakeReport;
 use SilverStripe\Reports\Tests\ReportAdminTest\FakeReport2;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 class ReportAdminTest extends FunctionalTest
 {
@@ -46,7 +47,7 @@ class ReportAdminTest extends FunctionalTest
         $this->assertSame('Fake report two', $map['Title']);
     }
 
-    public function provideShowReport(): array
+    public static function provideShowReport(): array
     {
         return [
             'cannot view' => [
@@ -60,9 +61,7 @@ class ReportAdminTest extends FunctionalTest
         ];
     }
 
-    /**
-     * @dataProvider provideShowReport
-     */
+    #[DataProvider('provideShowReport')]
     public function testShowReport(string $reportClass, int $expected): void
     {
         $this->logInWithPermission('ADMIN');
