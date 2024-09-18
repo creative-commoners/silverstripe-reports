@@ -6,7 +6,7 @@ use SilverStripe\Dev\TestOnly;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\Reports\Report;
 
-abstract class FakeTestAbstract extends Report implements TestOnly
+abstract class FakeReportAbstract extends Report implements TestOnly
 {
     public function title()
     {

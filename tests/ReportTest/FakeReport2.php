@@ -6,19 +6,18 @@ use SilverStripe\Dev\TestOnly;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\Reports\Report;
 
-class FakeTest extends Report implements TestOnly
+class FakeReport2 extends Report implements TestOnly
 {
     public function title()
     {
-        return 'Report title';
+        return 'Report title 2';
     }
 
     public function columns()
     {
         return array(
             "Title" => array(
-                "title" => "Page Title",
-                "link" => true,
+                "title" => "Page Title 2"
             )
         );
     }
@@ -30,6 +29,6 @@ class FakeTest extends Report implements TestOnly
 
     public function sort()
     {
-        return 100;
+        return 98;
     }
 }

@@ -6,8 +6,8 @@ use SilverStripe\Core\Config\Config;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\Forms\GridField\GridFieldDataColumns;
 use SilverStripe\Reports\Tests\ReportTest\FakeObject;
-use SilverStripe\Reports\Tests\ReportTest\FakeTest;
-use SilverStripe\Reports\Tests\ReportTest\FakeTest2;
+use SilverStripe\Reports\Tests\ReportTest\FakeReport;
+use SilverStripe\Reports\Tests\ReportTest\FakeReport2;
 use SilverStripe\Reports\Report;
 
 class ReportTest extends SapphireTest
@@ -34,22 +34,22 @@ class ReportTest extends SapphireTest
         foreach ($reports as $report) {
             $reportNames[] = get_class($report);
         }
-        $this->assertContains(FakeTest::class, $reportNames, 'ReportTest_FakeTest is in reports list');
+        $this->assertContains(FakeReport::class, $reportNames, 'ReportTest_FakeReport is in reports list');
 
         // Exclude one report
-        Config::modify()->merge(Report::class, 'excluded_reports', [FakeTest::class]);
+        Config::modify()->merge(Report::class, 'excluded_reports', [FakeReport::class]);
 
         $reports = Report::get_reports();
         $reportNames = array();
         foreach ($reports as $report) {
             $reportNames[] = get_class($report);
         }
-        $this->assertNotContains(FakeTest::class, $reportNames, 'ReportTest_FakeTest is NOT in reports list');
+        $this->assertNotContains(FakeReport::class, $reportNames, 'ReportTest_FakeReport is NOT in reports list');
 
         // Exclude two reports
         Config::modify()->merge(Report::class, 'excluded_reports', [
-            FakeTest::class,
-            FakeTest2::class
+            FakeReport::class,
+            FakeReport2::class
         ]);
 
         $reports = Report::get_reports();
@@ -57,8 +57,8 @@ class ReportTest extends SapphireTest
         foreach ($reports as $report) {
             $reportNames[] = get_class($report);
         }
-        $this->assertNotContains(FakeTest::class, $reportNames, 'ReportTest_FakeTest is NOT in reports list');
-        $this->assertNotContains(FakeTest2::class, $reportNames, 'ReportTest_FakeTest2 is NOT in reports list');
+        $this->assertNotContains(FakeReport::class, $reportNames, 'ReportTest_FakeReport is NOT in reports list');
+        $this->assertNotContains(FakeReport2::class, $reportNames, 'ReportTest_FakeReport2 is NOT in reports list');
     }
 
     public function testAbstractClassesAreExcluded()
@@ -69,15 +69,15 @@ class ReportTest extends SapphireTest
             $reportNames[] = get_class($report);
         }
         $this->assertNotContains(
-            'ReportTest_FakeTest_Abstract',
+            'ReportTest_FakeReport_Abstract',
             $reportNames,
-            'ReportTest_FakeTest_Abstract is NOT in reports list as it is abstract'
+            'ReportTest_FakeReport_Abstract is NOT in reports list as it is abstract'
         );
     }
 
     public function testPermissions()
     {
-        $report = new ReportTest\FakeTest2();
+        $report = new ReportTest\FakeReport2();
 
         // Visitor cannot view
         $this->logOut();
@@ -98,7 +98,7 @@ class ReportTest extends SapphireTest
 
     public function testColumnLink()
     {
-        $report = new ReportTest\FakeTest();
+        $report = new ReportTest\FakeReport();
         /** @var GridField $gridField */
         $gridField = $report->getReportField();
         /** @var GridFieldDataColumns $columns */
@@ -117,17 +117,17 @@ class ReportTest extends SapphireTest
 
     public function testCountForOverview()
     {
-        $report = new ReportTest\FakeTest3();
+        $report = new ReportTest\FakeReport3();
 
         // Count is limited to 10000 by default
         $this->assertEquals('10000+', $report->getCountForOverview());
 
         // Count is limited as per configuration
-        Config::modify()->set(ReportTest\FakeTest3::class, 'limit_count_in_overview', 15);
+        Config::modify()->set(ReportTest\FakeReport3::class, 'limit_count_in_overview', 15);
         $this->assertEquals('15+', $report->getCountForOverview());
 
         // A null limit displays the full count
-        Config::modify()->set(ReportTest\FakeTest3::class, 'limit_count_in_overview', null);
+        Config::modify()->set(ReportTest\FakeReport3::class, 'limit_count_in_overview', null);
         $this->assertEquals('15000', $report->getCountForOverview());
     }
 }
