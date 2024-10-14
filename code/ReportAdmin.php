@@ -119,9 +119,7 @@ class ReportAdmin extends LeftAndMain implements PermissionProvider
         }
 
         return $output
-            // Provide a good default for the reports order, otherwise this will be using sort by namespace
             ->sort('Title', 'ASC')
-            // Provide a good default for the data class, otherwise this will use the class of the first item in the list
             ->setDataClass(Report::class);
     }
 
@@ -250,14 +248,16 @@ class ReportAdmin extends LeftAndMain implements PermissionProvider
                 GridFieldPaginator::create()
             );
 
+            $titleLabel = _t('SilverStripe\\Reports\\ReportAdmin.ReportTitle', 'Title');
+            $descriptionLabel = _t('SilverStripe\\Reports\\ReportAdmin.ReportDescription', 'Description');
+
             // Configure the filter header filter search form
             $generalField = BasicSearchContext::config()->get('general_search_field_name');
             $searchFieldList = FieldList::create([
                 HiddenField::create($generalField),
-                TextField::create('Title'),
-                TextField::create('Description'),
+                TextField::create('Title', $titleLabel),
+                TextField::create('Description', $descriptionLabel),
             ]);
-
             $searchContext = BasicSearchContext::create(Report::class);
             $searchContext->setFields($searchFieldList);
 
@@ -266,22 +266,16 @@ class ReportAdmin extends LeftAndMain implements PermissionProvider
                 'Title',
                 'Description',
             ];
-
             foreach ($filters as $fieldName) {
                 $fieldFilter = PartialMatchFilter::create($fieldName);
-                $fieldFilter->setModifiers([
-                    // We want case-insensitive match to be consistent with other areas of the CMS
-                    'nocase',
-                ]);
                 $searchContext->addFilter($fieldFilter);
             }
-
             $filterHeader->setSearchContext($searchContext);
 
             $gridField = GridField::create('Reports', false, $this->Reports(), $gridFieldConfig);
             $columns->setDisplayFields(array(
-                'title' => _t('SilverStripe\\Reports\\ReportAdmin.ReportTitle', 'Title'),
-                'description' => _t('SilverStripe\\Reports\\ReportAdmin.ReportDescription', 'Description'),
+                'title' => $titleLabel,
+                'description' => $descriptionLabel,
             ));
 
             $columns->setFieldFormatting([
