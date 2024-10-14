@@ -7,12 +7,19 @@ use SilverStripe\Control\Controller;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\Form;
 use SilverStripe\Forms\GridField\GridField;
+use SilverStripe\Forms\GridField\GridFieldButtonRow;
 use SilverStripe\Forms\GridField\GridFieldConfig;
 use SilverStripe\Forms\GridField\GridFieldDataColumns;
-use SilverStripe\Forms\GridField\GridFieldFooter;
+use SilverStripe\Forms\GridField\GridFieldFilterHeader;
+use SilverStripe\Forms\GridField\GridFieldPageCount;
+use SilverStripe\Forms\GridField\GridFieldPaginator;
 use SilverStripe\Forms\GridField\GridFieldSortableHeader;
+use SilverStripe\Forms\HiddenField;
 use SilverStripe\Forms\HTMLEditor\HTMLEditorConfig;
+use SilverStripe\Forms\TextField;
 use SilverStripe\ORM\ArrayList;
+use SilverStripe\ORM\Filters\PartialMatchFilter;
+use SilverStripe\ORM\Search\BasicSearchContext;
 use SilverStripe\ORM\SS_List;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\PermissionProvider;
@@ -104,13 +111,16 @@ class ReportAdmin extends LeftAndMain implements PermissionProvider
      */
     public function Reports()
     {
-        $output = new ArrayList();
+        $output = ArrayList::create();
         foreach (Report::get_reports() as $report) {
             if ($report->canView()) {
                 $output->push($report);
             }
         }
-        return $output;
+
+        return $output
+            ->sort('Title', 'ASC')
+            ->setDataClass(Report::class);
     }
 
     public function handleAction($request, $action)
@@ -227,28 +237,56 @@ class ReportAdmin extends LeftAndMain implements PermissionProvider
             $fields = $report->getCMSFields();
         } else {
             // List all reports
-            $fields = new FieldList();
+            $fields = FieldList::create();
             $gridFieldConfig = GridFieldConfig::create()->addComponents(
+                // This is a container component that is required by filter header component
+                GridFieldButtonRow::create('before'),
+                $filterHeader = GridFieldFilterHeader::create(),
                 GridFieldSortableHeader::create(),
-                GridFieldDataColumns::create(),
-                GridFieldFooter::create()
+                $columns = GridFieldDataColumns::create(),
+                GridFieldPageCount::create(),
+                GridFieldPaginator::create()
             );
+
+            $titleLabel = _t('SilverStripe\\Reports\\ReportAdmin.ReportTitle', 'Title');
+            $descriptionLabel = _t('SilverStripe\\Reports\\ReportAdmin.ReportDescription', 'Description');
+
+            // Configure the filter header filter search form
+            $generalField = BasicSearchContext::config()->get('general_search_field_name');
+            $searchFieldList = FieldList::create([
+                HiddenField::create($generalField),
+                TextField::create('Title', $titleLabel),
+                TextField::create('Description', $descriptionLabel),
+            ]);
+            $searchContext = BasicSearchContext::create(Report::class);
+            $searchContext->setFields($searchFieldList);
+
+            // Setup filter configuration - partial match with case-insensitive modifier
+            $filters = [
+                'Title',
+                'Description',
+            ];
+            foreach ($filters as $fieldName) {
+                $fieldFilter = PartialMatchFilter::create($fieldName);
+                $searchContext->addFilter($fieldFilter);
+            }
+            $filterHeader->setSearchContext($searchContext);
+
             $gridField = GridField::create('Reports', false, $this->Reports(), $gridFieldConfig);
-            $columns = $gridField->getConfig()
-                ->getComponentByType(GridFieldDataColumns::class);
             $columns->setDisplayFields(array(
-                'title' => _t('SilverStripe\\Reports\\ReportAdmin.ReportTitle', 'Title'),
+                'title' => $titleLabel,
+                'description' => $descriptionLabel,
             ));
 
-            $columns->setFieldFormatting(array(
-                    'title' => '<a href=\"$Link\" class=\"grid-field__link-block\">$value ($CountForOverview)</a>'
-                ));
+            $columns->setFieldFormatting([
+                'title' => '<a href=\"$Link\" class=\"grid-field__link-block\">$value ($CountForOverview)</a>'
+            ]);
             $gridField->addExtraClass('all-reports-gridfield');
             $fields->push($gridField);
         }
 
-        $actions = new FieldList();
-        $form = new Form($this, "EditForm", $fields, $actions);
+        $actions = FieldList::create();
+        $form = Form::create($this, "EditForm", $fields, $actions);
         $form->addExtraClass(
             'panel panel--padded panel--scrollable cms-edit-form cms-panel-padded' . $this->BaseCSSClasses()
         );
